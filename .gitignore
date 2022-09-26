@@ -1,0 +1,8 @@
+# env
+.env
+
+# Dependency directories
+node_modules/
+
+#IntelliJ
+.idea
