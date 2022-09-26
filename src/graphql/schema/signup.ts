@@ -1,7 +1,6 @@
 import {gql} from "apollo-server-express";
 import {Scalars} from "apollo-server-core/src/plugin/schemaReporting/generated/operations";
 import {signup} from "../datasource/postgres/signup";
-import exp from "constants";
 
 export const signUpTypeDef = gql`
   input InputSignup {
