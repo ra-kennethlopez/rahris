@@ -12,3 +12,7 @@ export enum Roles {
   ADMIN = "ADMIN",
   GUEST = "GUEST"
 }
+
+export interface ArgsInput<T> {
+  param: T
+}

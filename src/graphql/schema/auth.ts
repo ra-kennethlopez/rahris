@@ -1,8 +1,8 @@
 import {gql} from "apollo-server-express";
 import {Scalars} from "apollo-server-core/src/plugin/schemaReporting/generated/operations";
-import {signup} from "../datasource/postgres/signup";
+import {login, signup} from "../datasource/postgres/auth";
 
-export const signUpTypeDef = gql`
+export const authTypeDef = gql`
   input InputSignup {
     firstname: String!
     lastname: String!
@@ -18,11 +18,27 @@ export const signUpTypeDef = gql`
   type Mutation {
     signup(param: InputSignup!): SignupResult!
   }
+
+  input InputLogin {
+    email: String!
+    password: String!
+  }
+
+  type LoginResult {
+    token: String!
+  }
+  
+  type Query {
+    login(param: InputLogin!): LoginResult!
+  }
 `;
 
-export const signUpResolver = {
+export const authResolver = {
   Mutation: {
     signup: signup
+  },
+  Query: {
+    login: login
   }
 }
 
@@ -34,6 +50,7 @@ export type InputSignup = {
   password: Scalars['String'];
 }
 
-export type ArgsInputSignup = {
-  param: InputSignup
-}
+export type InputLogin = {
+  email: Scalars['String'];
+  password: Scalars['String'];
+};

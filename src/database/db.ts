@@ -1,20 +1,40 @@
 import { SQLDataSource } from 'datasource-sql';
-import * as bcrypt from 'bcrypt';
-import {ParamCreateCompany, ParamCreateEmployee, ParamCreateUser} from "./types";
-import {InputSignup} from "../graphql/schema/signup";
+import {Knex} from "knex";
 import {customAlphabet} from "nanoid";
-import {UserInputError} from "apollo-server-core";
+import {ParamCreateCompany, ParamCreateEmployee, ParamCreateUser} from "./types";
+import UserModel from "./models/user";
 
-const SALT_ROUNDS = 10;
 const nanoid = customAlphabet('QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm1234567890-', 21)
 
 export default class DB extends SQLDataSource {
+    getUsers() {
+        return this.getAll('users')
+    }
+
+    getUserById(id: string) {
+        return this.getById('users', id)
+    }
+
+    getUser(email: string) {
+        return this.getAll('users')
+          .where<UserModel>('email', email)
+          .first()
+    }
+
+    createUser(param: ParamCreateUser) {
+        return this.insert('users', param)
+    }
+
     getCompanies() {
         return this.getAll('company')
     }
 
-    getUsers() {
-        return this.getAll('users')
+    getCompanyById(id: string) {
+        return this.getById('company', id)
+    }
+
+    createCompany(param: ParamCreateCompany) {
+        return this.insert('company', param)
     }
 
     getEmployees() {
@@ -34,67 +54,24 @@ export default class DB extends SQLDataSource {
             )
     }
 
-    getUserById(id: string) {
-        return this.getById('users', id)
-    }
-
-    getCompanyById(id: string) {
-        return this.getById('company', id)
-    }
-
-    createUser(param: ParamCreateUser) {
-        const { password, ...rest } = param;
-        const id = nanoid();
-
-        const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
-
-        return this.knex
-          .insert([{ id, password: passwordHash, ...rest }])
-          .returning('id')
-          .into('users');
-    }
-
-    createCompany(param: ParamCreateCompany) {
-        const id = nanoid();
-
-        return this.knex
-          .insert([{ id, ...param }])
-          .returning('id')
-          .into('company');
-    }
-
     createEmployee(param: ParamCreateEmployee) {
+        return this.insert('employee', param)
+    }
+
+    transaction<T>(
+      transactionScope: (trx: Knex.Transaction) => Promise<T> | void,
+      config?: Knex.TransactionConfig
+    ): Promise<T> {
+        return this.knex.transaction(transactionScope, config)
+    }
+
+    private insert<T>(tableName: string, param: T, column?: string | readonly (string | any)[] | any, options?: { includeTriggerModifications?: boolean }) {
         const id = nanoid();
 
         return this.knex
           .insert([{ id, ...param }])
-          .returning('id')
-          .into('employee')
-    }
-
-    signUp({ firstname, lastname, email, password, company }: InputSignup) {
-        return this.knex
-          .transaction( async trx => {
-            const res = await this.getAll('users', ['email'])
-              .where('email', email)
-              .first()
-
-            if (res) {
-              throw new UserInputError('That username is taken. Try another.')
-            }
-
-            const [{ id: user_id }] = await this.createUser({ email, password })
-              .transacting(trx)
-
-            const [{ id: company_id }] = await this.createCompany({ name: company })
-              .transacting(trx)
-
-            const [{ id: employee_id }] = await this.createEmployee({
-              firstname, lastname, user_id, company_id
-            }).transacting(trx)
-
-            return { user_id, company_id, employee_id }
-          })
+          .returning(column ?? 'id', options)
+          .into(tableName)
     }
 
     private getAll(table: string, column?: string[]) {
@@ -103,9 +80,9 @@ export default class DB extends SQLDataSource {
             .from(table)
     }
 
-    private getById(table: string, id: string, column?: string[]) {
+    private getById<T>(table: string, id: string, column?: string[]) {
         return this.getAll(table, column)
-          .where('id', id)
+          .where<T>('id', id)
           .first()
     }
 }

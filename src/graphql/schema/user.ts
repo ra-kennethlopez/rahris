@@ -7,7 +7,8 @@ import {users} from "../datasource/postgres/user";
 export const userTypeDef = gql`
     type User implements NodeG {
         id: ID!
-        email: String!
+        email: String
+        createdAt: String
     }
 
     type Query {
@@ -25,4 +26,6 @@ export type User = NodeG & {
     __typename?: 'User';
     id: Scalars['ID'];
     email?: Maybe<Scalars['String']>;
+    password?: Maybe<Scalars['String']>;
+    createdAt?: Maybe<Scalars['String']>;
 };

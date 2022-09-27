@@ -3,14 +3,14 @@ import {commonTypeDef} from "./common";
 import {companyResolver, companyTypeDef} from "./company";
 import {employeeResolver, employeeTypeDef} from "./employee";
 import {userResolver, userTypeDef} from "./user";
-import {signUpResolver, signUpTypeDef} from "./signup";
+import {authResolver, authTypeDef} from "./auth";
 
 export const typeDefs = [
   commonTypeDef,
   companyTypeDef,
   employeeTypeDef,
   userTypeDef,
-  signUpTypeDef
+  authTypeDef
 ]
 
 export const resolvers = _.merge(
@@ -18,5 +18,5 @@ export const resolvers = _.merge(
   userResolver,
   employeeResolver,
   companyResolver,
-  signUpResolver
+  authResolver
 )
